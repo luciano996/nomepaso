@@ -1,0 +1,12 @@
+/build
+/.gradle
+/app/build
+/local.properties
+.DS_Store
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/task.xml
+/.idea/usage.statistics.xml
+.gradle
