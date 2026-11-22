@@ -44,11 +44,14 @@ public class MainActivity extends AppCompatActivity implements StopsAdapter.OnSt
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
+        View mainView = findViewById(R.id.main);
+        if (mainView != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(mainView, (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+                return insets;
+            });
+        }
 
         this.dataManager = new JsonDataManager(this);
         this.rvStops = findViewById(R.id.rvStops);
@@ -58,8 +61,12 @@ public class MainActivity extends AppCompatActivity implements StopsAdapter.OnSt
         FloatingActionButton fabAdd = findViewById(R.id.fabAdd);
         ImageButton btnConfig = findViewById(R.id.btnConfig);
 
-        fabAdd.setOnClickListener(v -> startActivity(new Intent(this, MapaActivity.class)));
-        btnConfig.setOnClickListener(v -> startActivity(new Intent(this, ConfiguracionActivity.class)));
+        if (fabAdd != null) {
+            fabAdd.setOnClickListener(v -> startActivity(new Intent(this, MapaActivity.class)));
+        }
+        if (btnConfig != null) {
+            btnConfig.setOnClickListener(v -> startActivity(new Intent(this, ConfiguracionActivity.class)));
+        }
 
         loadData();
     }
@@ -72,6 +79,8 @@ public class MainActivity extends AppCompatActivity implements StopsAdapter.OnSt
 
     private void loadData() {
         this.stopsList = this.dataManager.loadStops();
+        if (this.rvStops == null || this.tvEmpty == null) return;
+
         if (this.stopsList == null || this.stopsList.isEmpty()) {
             this.tvEmpty.setVisibility(View.VISIBLE);
             this.rvStops.setVisibility(View.GONE);
@@ -167,7 +176,7 @@ public class MainActivity extends AppCompatActivity implements StopsAdapter.OnSt
                 .setTitle("Eliminar destino")
                 .setMessage("¿Estás seguro de que quieres eliminar " + stop.getName() + "?")
                 .setPositiveButton("Sí", (dialog, which) -> {
-                    if (position >= 0 && position < this.stopsList.size()) {
+                    if (this.stopsList != null && position >= 0 && position < this.stopsList.size()) {
                         this.stopsList.remove(position);
                         this.dataManager.saveStops(this.stopsList);
                         loadData();
