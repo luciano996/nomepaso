@@ -1,18 +1,28 @@
 package com.example.nomepaso;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import com.example.nomepaso.service.TrackingService;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 public class TrackingActivity extends AppCompatActivity {
+    private static final int PERMISSION_REQUEST_CODE = 200;
+
     private String destName;
     private double destLat;
     private double destLon;
@@ -51,7 +61,9 @@ public class TrackingActivity extends AppCompatActivity {
 
         this.tvDestName.setText(this.destName);
 
-        startTrackingService();
+        if (checkPermissionsAndStartService()) {
+            startTrackingService();
+        }
 
         btnStop.setOnClickListener(v -> {
             stopService(new Intent(TrackingActivity.this, TrackingService.class));
@@ -59,12 +71,59 @@ public class TrackingActivity extends AppCompatActivity {
         });
     }
 
+    private boolean checkPermissionsAndStartService() {
+        List<String> permissionsNeeded = new ArrayList<>();
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            permissionsNeeded.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            permissionsNeeded.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                permissionsNeeded.add(Manifest.permission.POST_NOTIFICATIONS);
+            }
+        }
+
+        if (!permissionsNeeded.isEmpty()) {
+            ActivityCompat.requestPermissions(this, permissionsNeeded.toArray(new String[0]), PERMISSION_REQUEST_CODE);
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            boolean allGranted = true;
+            for (int result : grantResults) {
+                if (result != PackageManager.PERMISSION_GRANTED) {
+                    allGranted = false;
+                    break;
+                }
+            }
+            if (allGranted) {
+                startTrackingService();
+            } else {
+                Toast.makeText(this, "Se requieren permisos de ubicación y notificaciones para el seguimiento.", Toast.LENGTH_LONG).show();
+                finish();
+            }
+        }
+    }
+
     private void startTrackingService() {
-        Intent serviceIntent = new Intent(this, TrackingService.class);
-        serviceIntent.putExtra("DEST_NAME", this.destName);
-        serviceIntent.putExtra("DEST_LAT", this.destLat);
-        serviceIntent.putExtra("DEST_LON", this.destLon);
-        ContextCompat.startForegroundService(this, serviceIntent);
+        try {
+            Intent serviceIntent = new Intent(this, TrackingService.class);
+            serviceIntent.putExtra("DEST_NAME", this.destName);
+            serviceIntent.putExtra("DEST_LAT", this.destLat);
+            serviceIntent.putExtra("DEST_LON", this.destLon);
+            ContextCompat.startForegroundService(this, serviceIntent);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Error al iniciar el servicio de seguimiento", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void updateUI(double lat, double lon, float distanceInMeters) {
