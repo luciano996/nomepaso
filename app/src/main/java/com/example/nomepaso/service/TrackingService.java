@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.location.Location;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -75,7 +76,13 @@ public class TrackingService extends Service {
         }
         createNotificationChannel();
         Notification notification = createNotification("Seguimiento activo para " + (this.destName != null ? this.destName : ""));
-        startForeground(NOTIFICATION_ID, notification);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
+        } else {
+            startForeground(NOTIFICATION_ID, notification);
+        }
+
         startLocationUpdates();
         return START_STICKY;
     }
