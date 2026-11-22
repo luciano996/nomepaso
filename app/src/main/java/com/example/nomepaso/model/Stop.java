@@ -1,11 +1,10 @@
 package com.example.nomepaso.model;
 
-/* loaded from: classes3.dex */
 public class Stop {
-    private boolean isActive = false;
+    private String name;
     private double latitude;
     private double longitude;
-    private String name;
+    private boolean isActive = false;
 
     public Stop(String name, double latitude, double longitude) {
         this.name = name;

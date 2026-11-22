@@ -12,25 +12,19 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-/* loaded from: classes4.dex */
 public class JsonDataManager {
     private static final String FILE_NAME = "stops_data.json";
     private final Context context;
     private final Gson gson = new Gson();
 
     public JsonDataManager(Context context) {
-        this.context = context;
+        this.context = context.getApplicationContext();
     }
 
     public void saveStops(List<Stop> stops) {
         File file = new File(this.context.getFilesDir(), FILE_NAME);
-        try {
-            FileWriter writer = new FileWriter(file);
-            try {
-                this.gson.toJson(stops, writer);
-                writer.close();
-            } finally {
-            }
+        try (FileWriter writer = new FileWriter(file)) {
+            this.gson.toJson(stops, writer);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -39,21 +33,15 @@ public class JsonDataManager {
     public List<Stop> loadStops() {
         File file = new File(this.context.getFilesDir(), FILE_NAME);
         if (!file.exists()) {
-            return new ArrayList();
+            return new ArrayList<>();
         }
-        try {
-            FileReader reader = new FileReader(file);
-            try {
-                Type listType = new TypeToken<ArrayList<Stop>>() { // from class: com.example.nomepaso.data.JsonDataManager.1
-                }.getType();
-                List<Stop> list = (List) this.gson.fromJson(reader, listType);
-                reader.close();
-                return list;
-            } finally {
-            }
+        try (FileReader reader = new FileReader(file)) {
+            Type listType = new TypeToken<ArrayList<Stop>>() {}.getType();
+            List<Stop> list = this.gson.fromJson(reader, listType);
+            return list != null ? list : new ArrayList<>();
         } catch (IOException e) {
             e.printStackTrace();
-            return new ArrayList();
+            return new ArrayList<>();
         }
     }
 }
